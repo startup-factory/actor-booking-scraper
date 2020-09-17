@@ -9,6 +9,7 @@ const {
     getAttribute, enqueueLinks, addUrlParameters, getWorkingBrowser, fixUrl,
     isFiltered, isMinMaxPriceSet, setMinMaxPrice, isPropertyTypeSet, setPropertyType, enqueueAllPages,
 } = require('./util.js');
+const csvToJson = require('csvtojson');
 
 const { log, requestAsBrowser } = Apify.utils;
 
