@@ -79,7 +79,7 @@ Apify.main(async () => {
 
         // convert any inconsistencies to correct format
         for (let i = 0; i < input.startUrls.length; i++) {
-            const {requestsFromUrl} = input.startUrl;
+            const {requestsFromUrl} = input.startUrls;
             Apify.utils.log.info(`requestsFromUrl: ${requestsFromUrl}`);
             if (requestsFromUrl){
                 const { body } = await Apify.utils.requestAsBrowser({ url: requestsFromUrl, encoding:'utf-8' });
