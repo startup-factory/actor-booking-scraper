@@ -144,9 +144,8 @@ module.exports.extractDetail = async (page, ld, input, userData) => {
  * NOTE: This function is to be used in page.evaluate.
  * @param {Object} input - The Actor input data object.
  */
-module.exports.listPageFunction = (input) => new Promise((resolve) => {
+module.exports.listPageFunction = (input, feelingLucky) => new Promise((resolve) => {
     const $ = window.jQuery;
-
     /**
      * Waits for a condition to be non-false.
      * @param {Function} condition - The condition Function.
@@ -166,7 +165,11 @@ module.exports.listPageFunction = (input) => new Promise((resolve) => {
 
     // Extract listing data.
     const result = [];
-    const items = $('.sr_property_block.sr_item:not(.soldout_property)');
+    let items = $('.sr_property_block.sr_item:not(.soldout_property)');
+    if (feelingLucky) {
+      // crawl only first item
+      items = [items[0]]
+    }
     let started = 0;
     let finished = 0;
 

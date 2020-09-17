@@ -73,38 +73,62 @@ Apify.main(async () => {
         if (!Array.isArray(input.startUrls)) {
             throw new Error('INPUT.startUrls must an array!');
         }
+        startUrl = addUrlParameters('https://www.booking.com/searchresults.html?dest_type=city&ss=paris&order=popularity', input);
 
         const urlList = [];
 
         // convert any inconsistencies to correct format
         for (let i = 0; i < input.startUrls.length; i++) {
-            let request = input.startUrls[i];
-
-            if (request.requestsFromUrl) {
-                const sourceUrlList = await downloadListOfUrls({ url: request.requestsFromUrl });
-                for (const url of sourceUrlList) {
-                    request = { url };
-                    if (request.url.indexOf('/hotel/') > -1) {
-                        request.userData = { label: 'detail' };
-                    }
-
-                    request.url = addUrlParameters(request.url, input);
-                    urlList.push(request);
-                }
-            } else {
-                if (typeof request === 'string') { request = { url: request }; }
-
-                if ((!request.userData || !request.userData.label !== 'detail') && request.url.indexOf('/hotel/') > -1) {
-                    request.userData = { label: 'detail' };
-                }
-
-                request.url = addUrlParameters(request.url, input);
-                urlList.push(request);
+            const {requestsFromUrl} = input.startUrl;
+            Apify.utils.log.info(`requestsFromUrl: ${requestsFromUrl}`);
+            if (requestsFromUrl){
+                const { body } = await Apify.utils.requestAsBrowser({ url: requestsFromUrl, encoding:'utf-8' });
+                let lines = body.split('\n');
+                delete  lines[0]
+                requestListSources = lines.map(line => {
+                    let [id, type, name, city, country] = line.trim().split('\t');
+                    if (!name) { return false }
+                    Apify.utils.log.info(`csv extraction: ${id} ${type} ${name} ${city} ${country}`);
+                    request = {
+                      url: startUrl,
+                      userData: {
+                        id,
+                        type,
+                        name,
+                        city,
+                        country,
+                        label: 'start'
+                      }
+                    };
+                    return request;
+                }).filter(req => !!req);
+                urlList.concat(requestListSources)
             }
+
+            // if (request.requestsFromUrl) {
+            //     const sourceUrlList = await downloadListOfUrls({ url: request.requestsFromUrl });
+            //     for (const url of sourceUrlList) {
+            //         request = { url };
+            //         if (request.url.indexOf('/hotel/') > -1) {
+            //             request.userData = { label: 'detail' };
+            //         }
+
+            //         request.url = addUrlParameters(request.url, input);
+            //         urlList.push(request);
+            //     }
+            // } else {
+            //     if (typeof request === 'string') { request = { url: request }; }
+
+            //     if ((!request.userData || !request.userData.label !== 'detail') && request.url.indexOf('/hotel/') > -1) {
+            //         request.userData = { label: 'detail' };
+            //     }
+
+            //     request.url = addUrlParameters(request.url, input);
+            //     urlList.push(request);
+            // }
         }
 
         requestList = new Apify.RequestList({ sources: urlList });
-        startUrl = addUrlParameters('https://www.booking.com/searchresults.html?dest_type=city&ss=paris&order=bayesian_review_score', input);
         await requestList.initialize();
     } else {
         // Create startURL based on provided INPUT.
@@ -174,6 +198,7 @@ Apify.main(async () => {
             if (input.startUrls) {
                 const pageUrl = await page.url();
                 if (pageUrl.length < request.url.length) {
+                    log.info('startUrl was not open correctly')
                     await retireBrowser(puppeteerPool, page, requestQueue, request);
                     return;
                 }
@@ -190,6 +215,7 @@ Apify.main(async () => {
 
             if (request.userData.label === 'detail') { // Extract data from the hotel detail page
                 // wait for necessary elements
+                log.info('Extract data from the hotel detail page')
                 try { await page.waitForSelector('.hprt-occupancy-occupancy-info'); } catch (e) { log.info('occupancy info not found'); }
 
                 const ldElem = await page.$('script[type="application/ld+json"]');
@@ -230,6 +256,7 @@ Apify.main(async () => {
                 await Apify.pushData({ ...detail, ...userResult });
             } else {
                 // Handle hotel list page.
+                log.info('Handle hotel list page.')
                 const filtered = await isFiltered(page);
                 const settingFilters = input.useFilters && !filtered;
                 const settingMinMaxPrice = input.minMaxPrice !== 'none' && !await isMinMaxPriceSet(page, input);
@@ -277,7 +304,9 @@ Apify.main(async () => {
                 if (enqueuingReady && input.simple) { // If simple output is enough, extract the data.
                     log.info('extracting data...');
                     await Apify.utils.puppeteer.injectJQuery(page);
-                    const result = await page.evaluate(listPageFunction, input);
+                    // we extract only the first result of page
+                    let feelingLucky = true
+                    const result = await page.evaluate(listPageFunction, input, feelingLucky);
                     log.info(`Found ${result.length} results`);
 
                     if (result.length > 0) {
@@ -295,7 +324,7 @@ Apify.main(async () => {
                         }
                     }
                 } else if (enqueuingReady) { // If not, enqueue the detail pages to be extracted.
-                    log.info('enqueuing detail pages...');
+                    log.info('enqueuing detail page from first search result...');
                     const urlMod = fixUrl('&', input);
                     const keyMod = async (link) => (await getAttribute(link, 'textContent')).trim().replace(/\n/g, '');
                     const prItem = await page.$('.bui-pagination__info');
@@ -303,23 +332,23 @@ Apify.main(async () => {
                     const firstItem = parseInt(pageRange && pageRange[0] ? pageRange[0] : '1', 10);
                     const links = await page.$$('.sr_property_block.sr_item:not(.soldout_property) .hotel_name_link');
 
-                    for (let iLink = 0; iLink < links.length; iLink++) {
-                        const link = links[iLink];
-                        const href = await getAttribute(link, 'href');
+                    // index first item only
+                    iLink = 0
+                    const link = links[iLink];
+                    const href = await getAttribute(link, 'href');
 
-                        if (href) {
-                            const uniqueKeyCal = keyMod ? (await keyMod(link)) : href;
-                            const urlModCal = urlMod ? urlMod(href) : href;
+                    if (href) {
+                        const uniqueKeyCal = keyMod ? (await keyMod(link)) : href;
+                        const urlModCal = urlMod ? urlMod(href) : href;
 
-                            await requestQueue.addRequest({
-                                userData: {
-                                    label: 'detail',
-                                    order: iLink + firstItem,
-                                },
-                                url: urlModCal,
-                                uniqueKey: uniqueKeyCal,
-                            }, { forefront: true });
-                        }
+                        await requestQueue.addRequest({
+                            userData: {
+                                label: 'detail',
+                                order: iLink + firstItem,
+                            },
+                            url: urlModCal,
+                            uniqueKey: uniqueKeyCal,
+                        }, { forefront: true });
                     }
                 }
             }
