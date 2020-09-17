@@ -24,11 +24,11 @@
                 "Region"
             ]
         },
-        "startUrls": {
-            "title": "Start URLs",
-            "type": "array",
-            "description": "URLs to start with instead of search query",
-            "editor": "requestListSources"
+        "googlesheetLink": {
+          "title": "Google Sheet",
+          "type": "string",
+          "description": "Google sheet link",
+          "editor": "textfield"
         },
         "sortBy": {
             "title": "Order results by",

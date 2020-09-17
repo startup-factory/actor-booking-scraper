@@ -24,10 +24,10 @@ Apify.main(async () => {
     let migrating = false;
     Apify.events.on('migrating', () => { migrating = true; });
 
-    if (!input.search && !input.startUrls) {
-        throw new Error('Missing "search" or "startUrls" attribute in INPUT!');
-    } else if (input.search && input.startUrls && input.search.trim().length > 0 && input.startUrls.length > 0) {
-        throw new Error('It is not possible to use both "search" and "startUrls" attributes in INPUT!');
+    if (!input.search && !input.googlesheetLink) {
+        throw new Error('Missing "search" or "googlesheetLink" attribute in INPUT!');
+    } else if (input.search && input.googlesheetLink && input.search.trim().length > 0 && input.googlesheetLink.length > 0) {
+        throw new Error('It is not possible to use both "search" and "googlesheetLink" attributes in INPUT!');
     }
     if (!(input.proxyConfig && input.proxyConfig.useApifyProxy)) {
         throw new Error('This actor cannot be used without Apify proxy.');
@@ -69,65 +69,34 @@ Apify.main(async () => {
     let startUrl;
     let requestList;
 
-    if (input.startUrls) {
-        if (!Array.isArray(input.startUrls)) {
-            throw new Error('INPUT.startUrls must an array!');
-        }
-        startUrl = addUrlParameters('https://www.booking.com/searchresults.html?dest_type=city&ss=paris&order=popularity', input);
+    if (input.googlesheetLink) {
+        const [ googlesheet ] = input.googlesheetLink.match(/.*\/spreadsheets\/d\/.*\//);
+        const sourceUrl = `${googlesheet}gviz/tq?tqx=out:csv`;
+        const response = await requestAsBrowser({ url: sourceUrl, encoding: 'utf8' });
+
+        const rows = await csvToJson().fromString(response.body);
+        log.info('Google sheets rows = ' + rows.length);
 
         const urlList = [];
+        startUrl = addUrlParameters('https://www.booking.com/searchresults.html?dest_type=city&ss=paris&order=popularity', input);
+        for (let index = 1; index < rows.length; index++) {
+            const { id, type, name, city, country } = rows[index];
+            if (!name) { return false }
+            Apify.utils.log.info(`csv extraction: ${id} ${type} ${name} ${city} ${country}`);
+            request = {
+              url: startUrl,
+              userData: {
+                id,
+                type,
+                name,
+                city,
+                country,
+                label: 'start'
+              }
+            };
 
-        // convert any inconsistencies to correct format
-        for (let i = 0; i < input.startUrls.length; i++) {
-            const {requestsFromUrl} = input.startUrls;
-            Apify.utils.log.info(`requestsFromUrl: ${requestsFromUrl}`);
-            if (requestsFromUrl){
-                const { body } = await Apify.utils.requestAsBrowser({ url: requestsFromUrl, encoding:'utf-8' });
-                let lines = body.split('\n');
-                delete  lines[0]
-                requestListSources = lines.map(line => {
-                    let [id, type, name, city, country] = line.trim().split('\t');
-                    if (!name) { return false }
-                    Apify.utils.log.info(`csv extraction: ${id} ${type} ${name} ${city} ${country}`);
-                    request = {
-                      url: startUrl,
-                      userData: {
-                        id,
-                        type,
-                        name,
-                        city,
-                        country,
-                        label: 'start'
-                      }
-                    };
-                    return request;
-                }).filter(req => !!req);
-                urlList.concat(requestListSources)
-            }
-
-            // if (request.requestsFromUrl) {
-            //     const sourceUrlList = await downloadListOfUrls({ url: request.requestsFromUrl });
-            //     for (const url of sourceUrlList) {
-            //         request = { url };
-            //         if (request.url.indexOf('/hotel/') > -1) {
-            //             request.userData = { label: 'detail' };
-            //         }
-
-            //         request.url = addUrlParameters(request.url, input);
-            //         urlList.push(request);
-            //     }
-            // } else {
-            //     if (typeof request === 'string') { request = { url: request }; }
-
-            //     if ((!request.userData || !request.userData.label !== 'detail') && request.url.indexOf('/hotel/') > -1) {
-            //         request.userData = { label: 'detail' };
-            //     }
-
-            //     request.url = addUrlParameters(request.url, input);
-            //     urlList.push(request);
-            // }
+            urlList.concat(request)
         }
-
         requestList = new Apify.RequestList({ sources: urlList });
         await requestList.initialize();
     } else {
