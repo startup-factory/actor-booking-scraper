@@ -10,7 +10,7 @@ const {
     isFiltered, isMinMaxPriceSet, setMinMaxPrice, isPropertyTypeSet, setPropertyType, enqueueAllPages,
 } = require('./util.js');
 
-const { log } = Apify.utils;
+const { log, requestAsBrowser } = Apify.utils;
 
 /** Main function */
 Apify.main(async () => {
