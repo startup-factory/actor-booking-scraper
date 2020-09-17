@@ -77,6 +77,7 @@ Apify.main(async () => {
 
         const rows = await csvToJson().fromString(response.body);
         log.info('Google sheets rows = ' + rows.length);
+        log.info(rows);
 
         const urlList = [];
         startUrl = addUrlParameters('https://www.booking.com/searchresults.html?dest_type=city&ss=paris&order=popularity', input);
