@@ -241,15 +241,15 @@ Apify.main(async () => {
                 const enqueuingReady = !(settingFilters || settingMinMaxPrice || settingPropertyType);
 
                 // Check if the page was open through working proxy.
-                // const pageUrl = await page.url();
-                // if (!input.startUrls && pageUrl.indexOf(sortBy) < 0) {
-                //     log.info(`page not open through working proxy`)
-                //     await retireBrowser(puppeteerPool, page, requestQueue, request);
-                //     return;
-                // }
+                const pageUrl = await page.url();
+                if (!input.startUrls && !input.googlesheetLink && pageUrl.indexOf(sortBy) < 0) {
+                    log.info(`page not open through working proxy`)
+                    await retireBrowser(puppeteerPool, page, requestQueue, request);
+                    return;
+                }
 
                 // If it's aprropriate, enqueue all pagination pages
-                if (enqueuingReady && (!input.maxPages || input.minMaxPrice !== 'none' || input.propertyType !== 'none')) {
+                if (!input.googlesheetLink && enqueuingReady && (!input.maxPages || input.minMaxPrice !== 'none' || input.propertyType !== 'none')) {
                     enqueueAllPages(page, requestQueue, input);
                 }
 
@@ -284,7 +284,7 @@ Apify.main(async () => {
                     await Apify.utils.puppeteer.injectJQuery(page);
                     // we extract only the first result of page
                     let feelingLucky = true
-                    const result = await page.evaluate(listPageFunction, input, feelingLucky);
+                    const result = await page.evaluate(listPageFunction, input, feelingLucky, request.userData);
                     log.info(`Found ${result.length} results`);
 
                     if (result.length > 0) {

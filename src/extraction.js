@@ -144,7 +144,7 @@ module.exports.extractDetail = async (page, ld, input, userData) => {
  * NOTE: This function is to be used in page.evaluate.
  * @param {Object} input - The Actor input data object.
  */
-module.exports.listPageFunction = (input, feelingLucky) => new Promise((resolve) => {
+module.exports.listPageFunction = (input, feelingLucky, userData) => new Promise((resolve) => {
     const $ = window.jQuery;
     /**
      * Waits for a condition to be non-false.
@@ -224,6 +224,11 @@ module.exports.listPageFunction = (input, feelingLucky) => new Promise((resolve)
                 address,
                 location: latlng ? { lat: latlng[0], lng: latlng[1] } : null,
                 image,
+                inputId: userData.id,
+                inputType: userData.type,
+                inputName: userData.name,
+                inputCity: userData.city,
+                inputCountry: userData.country
             };
             if (!item.rating || item.rating >= (input.minScore || 0)) { result.push(item); }
             if (++finished >= started) { resolve(result); }
