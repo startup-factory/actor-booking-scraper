@@ -272,6 +272,7 @@ exports.checkDateGap = (checkIn, checkOut) => {
  * Necessary if the page was open through a not working proxy.
  */
 module.exports.retireBrowser = async (puppeteerPool, page, requestQueue, request) => {
+    log.info('retireBrowser')
     await puppeteerPool.retire(page.browser());
     await requestQueue.addRequest({
         url: request.url,

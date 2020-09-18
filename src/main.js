@@ -132,6 +132,7 @@ Apify.main(async () => {
         requestList,
         requestQueue,
         handlePageTimeoutSecs: 120,
+        maxRequestRetries: 1,
         proxyConfiguration,
         launchPuppeteerOptions: {
             ignoreHTTPSErrors: true,
@@ -183,6 +184,7 @@ Apify.main(async () => {
             const currency = await getAttribute(curInput, 'value');
 
             if (!currency || currency !== input.currency) {
+                log.info(`Wrong currency: ${currency}, re-enqueuing...`)
                 await retireBrowser(puppeteerPool, page, requestQueue, request);
                 throw new Error(`Wrong currency: ${currency}, re-enqueuing...`);
             }
@@ -197,11 +199,12 @@ Apify.main(async () => {
                 await Apify.utils.puppeteer.injectJQuery(page);
 
                 // Check if the page was open through working proxy.
-                const pageUrl = await page.url();
-                if (!input.startUrls && pageUrl.indexOf('label') < 0) {
-                    await retireBrowser(puppeteerPool, page, requestQueue, request);
-                    return;
-                }
+                // const pageUrl = await page.url();
+                // if (!input.startUrls && pageUrl.indexOf('label') < 0) {
+                //     log.info(`page not open through working proxy`)
+                //     await retireBrowser(puppeteerPool, page, requestQueue, request);
+                //     return;
+                // }
 
                 // Exit if core data is not present ot the rating is too low.
                 if (!ld || (ld.aggregateRating && ld.aggregateRating.ratingValue <= (input.minScore || 0))) {
@@ -238,11 +241,12 @@ Apify.main(async () => {
                 const enqueuingReady = !(settingFilters || settingMinMaxPrice || settingPropertyType);
 
                 // Check if the page was open through working proxy.
-                const pageUrl = await page.url();
-                if (!input.startUrls && pageUrl.indexOf(sortBy) < 0) {
-                    await retireBrowser(puppeteerPool, page, requestQueue, request);
-                    return;
-                }
+                // const pageUrl = await page.url();
+                // if (!input.startUrls && pageUrl.indexOf(sortBy) < 0) {
+                //     log.info(`page not open through working proxy`)
+                //     await retireBrowser(puppeteerPool, page, requestQueue, request);
+                //     return;
+                // }
 
                 // If it's aprropriate, enqueue all pagination pages
                 if (enqueuingReady && (!input.maxPages || input.minMaxPrice !== 'none' || input.propertyType !== 'none')) {
@@ -337,7 +341,6 @@ Apify.main(async () => {
 
         gotoFunction: async ({ page, request }) => {
             await Apify.utils.puppeteer.blockRequests(page);
-            log.info('gotoFunction')
             const cookies = await page.cookies('https://www.booking.com');
             await page.deleteCookie(...cookies);
             await page.setViewport({
