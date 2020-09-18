@@ -6,8 +6,10 @@ const { downloadListOfUrls } = Apify.utils;
 const { extractDetail, listPageFunction } = require('./extraction.js');
 const { checkDate, checkDateGap, retireBrowser, isObject } = require('./util.js');
 const {
-    getAttribute, enqueueLinks, addUrlParameters, getWorkingBrowser, fixUrl,
-    isFiltered, isMinMaxPriceSet, setMinMaxPrice, isPropertyTypeSet, setPropertyType, enqueueAllPages,
+    getAttribute, enqueueLinks, addUrlParameters,
+    getWorkingBrowser, fixUrl, isFiltered,
+    isMinMaxPriceSet, setMinMaxPrice, isPropertyTypeSet,
+    setPropertyType, enqueueAllPages, isAutocompletionSet
 } = require('./util.js');
 const csvToJson = require('csvtojson');
 
@@ -238,6 +240,7 @@ Apify.main(async () => {
                 const settingFilters = input.useFilters && !filtered;
                 const settingMinMaxPrice = input.minMaxPrice !== 'none' && !await isMinMaxPriceSet(page, input);
                 const settingPropertyType = input.propertyType !== 'none' && !await isPropertyTypeSet(page, input);
+                const settingAutocompletion = !await isAutocompletionSet(page, input, request.userData.name);
                 const enqueuingReady = !(settingFilters || settingMinMaxPrice || settingPropertyType);
 
                 // Check if the page was open through working proxy.
@@ -273,6 +276,10 @@ Apify.main(async () => {
                     });
                 }
 
+                if (settingAutocompletion) {
+                    await setAutocompletion(page, input, request.userData);
+                }
+
                 const items = await page.$$('.sr_property_block.sr_item:not(.soldout_property)');
                 if (items.length === 0) {
                     log.info('Found no result. Skipping..');
@@ -286,6 +293,7 @@ Apify.main(async () => {
                     let feelingLucky = true
                     const result = await page.evaluate(listPageFunction, input, feelingLucky, request.userData);
                     log.info(`Found ${result.length} results`);
+                    log.info(`First result name ${result[0].name}`);
 
                     if (result.length > 0) {
                         const toBeAdded = [];

@@ -176,6 +176,34 @@ module.exports.isPropertyTypeSet = async (page, input) => {
     return true;
 };
 
+module.exports.isAutocompletionSet = async (page, input, searchName) => {
+    if (input.googlesheetLink) {
+        const set = await page.evaluate((searchName) => {
+            let searchInputVal = $('.c-autocomplete input[type=search]').val()
+            log.info(`searchInputVal: ${searchInputVal}`)
+            return (searchInputVal.indexOf(searchName) >= 0)
+            return true;
+        }, searchName);
+
+        return set;
+    }
+
+    return true;
+};
+
+module.exports.setAutocompletion = async (page, input, requestQueue, userData) => {
+    const set = await page.evaluate(() => {
+      log.info('enqueuing autocompletion page...');
+      const urlMod = fixUrl('&', input);
+      let searchValue = `${userData.name}, ${userData.city}`
+      log.info(`Using autocompletion 1: ${searchValue}`);
+      $('.c-autocomplete input[type=search]').val(searchValue)
+      $('.c-autocomplete__list li').eq(0).click()
+      $('#frm').submit()
+    })
+    return set;
+};
+
 module.exports.setPropertyType = async (page, input, requestQueue, userData) => {
     log.info('enqueuing property type page...');
     const filters = await page.$$('.filterelement');
