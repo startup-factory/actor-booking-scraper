@@ -99,11 +99,12 @@ Apify.main(async () => {
 
             urlList.push(request)
         }
-        log.info(`urlList: ${urlList.count}`)
+        log.info(`urlList: ${urlList.length}`)
         requestList = new Apify.RequestList({ sources: urlList });
         await requestList.initialize();
     } else {
         // Create startURL based on provided INPUT.
+        log.info('Starting crawling from search input.');
         const dType = input.destType || 'city';
         const query = encodeURIComponent(input.search);
         startUrl = `https://www.booking.com/searchresults.html?dest_type=${dType}&ss=${query}&order=${sortBy}`;
@@ -164,7 +165,8 @@ Apify.main(async () => {
         },
 
         handlePageFunction: async ({ page, request, puppeteerPool }) => {
-            log.info(`open url(${request.userData.label}): ${await page.url()}`);
+            log.info(`handle request: ${request.userData.label} - ${request.userData.type} - ${request.userData.name} - ${request.userData.city}`);
+            log.info(`open url: ${await page.url()}`);
 
             // Check if startUrl was open correctly
             if (input.startUrls) {
@@ -335,7 +337,7 @@ Apify.main(async () => {
 
         gotoFunction: async ({ page, request }) => {
             await Apify.utils.puppeteer.blockRequests(page);
-
+            log.info('gotoFunction')
             const cookies = await page.cookies('https://www.booking.com');
             await page.deleteCookie(...cookies);
             await page.setViewport({
