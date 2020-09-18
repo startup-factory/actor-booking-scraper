@@ -9,7 +9,7 @@ const {
     getAttribute, enqueueLinks, addUrlParameters,
     getWorkingBrowser, fixUrl, isFiltered,
     isMinMaxPriceSet, setMinMaxPrice, isPropertyTypeSet,
-    setPropertyType, enqueueAllPages, isAutocompletionSet
+    setPropertyType, enqueueAllPages, isAutocompletionSet, setAutocompletion
 } = require('./util.js');
 const csvToJson = require('csvtojson');
 
