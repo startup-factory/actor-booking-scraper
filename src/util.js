@@ -180,9 +180,8 @@ module.exports.isAutocompletionSet = async (page, input, searchName) => {
     if (input.googlesheetLink) {
         const inputSelector = '.c-autocomplete input[type=search]'
         await page.waitForSelector(inputSelector, { timeout: 10000 });
-        const searchInputVal = await page.click(inputSelector);
         const input = await page.$(inputSelector);
-        const text = await page.evaluate(input => input.textContent, input);
+        const searchInputVal = await page.evaluate(input => input.textContent, input);
         log.info(`searchInputVal: ${searchInputVal}`)
         return (searchInputVal.indexOf(searchName) >= 0)
     }
