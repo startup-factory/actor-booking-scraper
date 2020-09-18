@@ -178,30 +178,26 @@ module.exports.isPropertyTypeSet = async (page, input) => {
 
 module.exports.isAutocompletionSet = async (page, input, searchName) => {
     if (input.googlesheetLink) {
-        const set = await page.evaluate((searchName, log) => {
-            let searchInputVal = $('.c-autocomplete input[type=search]').val()
-            log.info(`searchInputVal: ${searchInputVal}`)
-            return (searchInputVal.indexOf(searchName) >= 0)
-            return true;
-        }, searchName, log);
-
-        return set;
+        const inputSelector = '.c-autocomplete input[type=search]'
+        await page.waitForSelector(inputSelector, { timeout: 10000 });
+        const searchInputVal = await page.click(inputSelector);
+        log.info(`searchInputVal: ${searchInputVal}`)
+        return (searchInputVal.indexOf(searchName) >= 0)
     }
-
     return true;
 };
 
 module.exports.setAutocompletion = async (page, input, requestQueue, userData) => {
-    const set = await page.evaluate((log) => {
-      log.info('enqueuing autocompletion page...');
-      const urlMod = fixUrl('&', input);
-      let searchValue = `${userData.name}, ${userData.city}`
-      log.info(`Using autocompletion 1: ${searchValue}`);
-      $('.c-autocomplete input[type=search]').val(searchValue)
-      $('.c-autocomplete__list li').eq(0).click()
-      $('#frm').submit()
-    }, log)
-    return set;
+    log.info('enqueuing autocompletion page...');
+    const searchValue = `${userData.name}, ${userData.city}`
+    const autocompleteFirstLiSelector = '.c-autocomplete__list li'
+    const formSelector = '#frm'
+    log.info(`Using autocompletion: ${searchValue}`);
+    await page.type('.c-autocomplete input[type=search]', searchValue);
+    await page.waitForSelector(autocompleteFirstLiSelector, { timeout: 10000 });
+    await page.click(autocompleteFirstLiSelector);
+    await page.waitForSelector(formSelector, { timeout: 10000 });
+    await page.click(formSelector);
 };
 
 module.exports.setPropertyType = async (page, input, requestQueue, userData) => {
