@@ -81,7 +81,7 @@ Apify.main(async () => {
 
         const urlList = [];
         startUrl = addUrlParameters('https://www.booking.com/searchresults.html?dest_type=city&ss=paris&order=popularity', input);
-        for (let index = 1; index < rows.length; index++) {
+        for (let index = 0; index < rows.length; index++) {
             const { id, type, name, city, country } = rows[index];
             if (!name) { return false }
             Apify.utils.log.info(`csv extraction: ${id} ${type} ${name} ${city} ${country}`);
@@ -97,8 +97,9 @@ Apify.main(async () => {
               }
             };
 
-            urlList.concat(request)
+            urlList.push(request)
         }
+        log.info(`urlList: ${urlList.count}`)
         requestList = new Apify.RequestList({ sources: urlList });
         await requestList.initialize();
     } else {
