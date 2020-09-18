@@ -176,7 +176,7 @@ module.exports.isPropertyTypeSet = async (page, input) => {
     return true;
 };
 
-module.exports.setPropertyType = async (page, input, requestQueue) => {
+module.exports.setPropertyType = async (page, input, requestQueue, userData) => {
     log.info('enqueuing property type page...');
     const filters = await page.$$('.filterelement');
     const urlMod = fixUrl('&', input);
@@ -187,7 +187,10 @@ module.exports.setPropertyType = async (page, input, requestQueue) => {
             log.info(`Using filter 1: ${fText}`);
             const href = await getAttribute(filter, 'href');
             await requestQueue.addRequest({
-                userData: { label: 'page' },
+                userData: {
+                  ...userData,
+                  label: 'page'
+                },
                 url: urlMod(href),
                 uniqueKey: `${fText}_0`,
             });
