@@ -168,7 +168,7 @@ module.exports.listPageFunction = (input, feelingLucky) => new Promise((resolve)
     let items = $('.sr_property_block.sr_item:not(.soldout_property)');
     if (feelingLucky) {
       // crawl only first item
-      items = [items[0]]
+      items = items.eq(0);
     }
     let started = 0;
     let finished = 0;
