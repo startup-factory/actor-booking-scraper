@@ -188,7 +188,7 @@ module.exports.isAutocompletionSet = async (page, input, searchName) => {
     return true;
 };
 
-module.exports.setAutocompletion = async (page, input, requestQueue, userData) => {
+module.exports.setAutocompletion = async (page, input, userData) => {
     log.info('enqueuing autocompletion page...');
     const searchValue = `${userData.name}, ${userData.city}`
     const autocompleteFirstLiSelector = '.c-autocomplete__list li'
