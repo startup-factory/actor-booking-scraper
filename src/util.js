@@ -179,7 +179,7 @@ module.exports.isPropertyTypeSet = async (page, input) => {
 module.exports.isAutocompletionSet = async (page, input, searchName) => {
     if (input.googlesheetLink) {
         const inputSelector = '.c-autocomplete input[type=search]'
-        await page.waitForSelector(inputSelector, { timeout: 10000 });
+        await page.waitForSelector(inputSelector, { timeout: 5000 });
         const input = await page.$(inputSelector);
         const searchInputVal = await page.evaluate(input => input.textContent, input);
         log.info(`searchInputVal: ${searchInputVal}`)
