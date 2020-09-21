@@ -20,6 +20,12 @@ const getAttribute = async (element, attr, fallback = '') => {
 };
 module.exports.getAttribute = getAttribute;
 
+
+const saveScreen = async (page, key = 'debug-screen') => {
+    const screenshotBuffer = await page.screenshot({ fullPage: true });
+    await Apify.setValue(key, screenshotBuffer, { contentType: 'image/png' });
+};
+
 /**
  * Adds links from a page to the RequestQueue.
  * @param {Puppeteer.Page} page - Puppeteer Page object containing the link elements.
@@ -184,6 +190,7 @@ module.exports.isAutocompletionSet = async (page, input, searchName) => {
         const searchInputVal = await getAttribute(inputHtml, 'textContent')
         log.info(`searchName: ${searchName}`)
         log.info(`searchInputVal: ${searchInputVal}`)
+        await saveSnapshot(page, { key: 'isAutocompletionSet' });
         return (searchInputVal.indexOf(searchName) >= 0)
     }
     return true;
@@ -196,17 +203,15 @@ module.exports.setAutocompletion = async (page, input, userData) => {
     const formSelector = '#frm'
     log.info(`Using autocompletion: ${searchValue}`);
     await page.type('.c-autocomplete input[type=search]', searchValue);
+    await saveSnapshot(page, { key: 'setAutocompletion1' });
     await page.waitForSelector(autocompleteFirstLiSelector, { timeout: 10000 });
     await page.click(autocompleteFirstLiSelector);
     await page.waitForSelector(formSelector, { timeout: 10000 });
 
-    const inputSelector = '.c-autocomplete input[type=search]'
-    try { await page.waitForSelector(inputSelector); } catch (e) { log.info('Search input not found'); }
-    const inputHtml = await page.$(inputSelector);
-    const searchInputVal = await getAttribute(inputHtml, 'textContent')
-    log.info(`searchInputVal2: ${searchInputVal}`)
+    await saveSnapshot(page, { key: 'setAutocompletion2' });
 
     await page.click(formSelector);
+    await saveSnapshot(page, { key: 'setAutocompletion3' });
 };
 
 module.exports.setPropertyType = async (page, input, requestQueue, userData) => {
