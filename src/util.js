@@ -179,9 +179,10 @@ module.exports.isPropertyTypeSet = async (page, input) => {
 module.exports.isAutocompletionSet = async (page, input, searchName) => {
     if (input.googlesheetLink) {
         const inputSelector = '.c-autocomplete input[type=search]'
-        await page.waitForSelector(inputSelector, { timeout: 5000 });
+        try { await page.waitForSelector(inputSelector); } catch (e) { log.info('Search input not found'); }
         const input = await page.$(inputSelector);
-        const searchInputVal = await page.evaluate(input => input.textContent, input);
+        const searchInputVal = await getAttribute(input, 'textContent')
+        log.info(`searchName: ${searchName}`)
         log.info(`searchInputVal: ${searchInputVal}`)
         return (searchInputVal.indexOf(searchName) >= 0)
     }
@@ -199,6 +200,7 @@ module.exports.setAutocompletion = async (page, input, userData) => {
     await page.click(autocompleteFirstLiSelector);
     await page.waitForSelector(formSelector, { timeout: 10000 });
     await page.click(formSelector);
+    await isAutocompletionSet(page, input, userData.name)
 };
 
 module.exports.setPropertyType = async (page, input, requestQueue, userData) => {
