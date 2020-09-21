@@ -190,7 +190,7 @@ module.exports.isAutocompletionSet = async (page, input, searchName) => {
         const searchInputVal = await getAttribute(inputHtml, 'textContent')
         log.info(`searchName: ${searchName}`)
         log.info(`searchInputVal: ${searchInputVal}`)
-        await saveScreen(page, { key: 'isAutocompletionSet' });
+        await saveScreen(page, 'isAutocompletionSet');
         return (searchInputVal.indexOf(searchName) >= 0)
     }
     return true;
@@ -203,15 +203,15 @@ module.exports.setAutocompletion = async (page, input, userData) => {
     const formSelector = '#frm'
     log.info(`Using autocompletion: ${searchValue}`);
     await page.type('.c-autocomplete input[type=search]', searchValue);
-    await saveScreen(page, { key: 'setAutocompletion1' });
+    await saveScreen(page, 'setAutocompletion1');
     await page.waitForSelector(autocompleteFirstLiSelector, { timeout: 10000 });
     await page.click(autocompleteFirstLiSelector);
     await page.waitForSelector(formSelector, { timeout: 10000 });
 
-    await saveScreen(page, { key: 'setAutocompletion2' });
+    await saveScreen(page, 'setAutocompletion2');
 
     await page.click(formSelector);
-    await saveScreen(page, { key: 'setAutocompletion3' });
+    await saveScreen(page, 'setAutocompletion3');
 };
 
 module.exports.setPropertyType = async (page, input, requestQueue, userData) => {
