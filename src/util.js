@@ -22,7 +22,7 @@ module.exports.getAttribute = getAttribute;
 
 
 const saveScreen = async (page, key = 'debug-screen') => {
-    const screenshotBuffer = await page.screenshot({ fullPage: true });
+    const screenshotBuffer = await page.screenshot({ fullPage: false });
     await Apify.setValue(key, screenshotBuffer, { contentType: 'image/png' });
 };
 

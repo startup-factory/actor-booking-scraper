@@ -136,6 +136,8 @@ Apify.main(async () => {
         maxRequestRetries: 1,
         proxyConfiguration,
         launchPuppeteerOptions: {
+            headless: false,
+            devtools: true,
             ignoreHTTPSErrors: true,
             useChrome: Apify.isAtHome(),
             args: [
