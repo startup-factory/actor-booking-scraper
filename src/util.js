@@ -199,8 +199,14 @@ module.exports.setAutocompletion = async (page, input, userData) => {
     await page.waitForSelector(autocompleteFirstLiSelector, { timeout: 10000 });
     await page.click(autocompleteFirstLiSelector);
     await page.waitForSelector(formSelector, { timeout: 10000 });
+
+    const inputSelector = '.c-autocomplete input[type=search]'
+    try { await page.waitForSelector(inputSelector); } catch (e) { log.info('Search input not found'); }
+    const input = await page.$(inputSelector);
+    const searchInputVal = await getAttribute(input, 'textContent')
+    log.info(`searchInputVal2: ${searchInputVal}`)
+
     await page.click(formSelector);
-    await isAutocompletionSet(page, input, userData.name)
 };
 
 module.exports.setPropertyType = async (page, input, requestQueue, userData) => {
