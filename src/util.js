@@ -180,8 +180,8 @@ module.exports.isAutocompletionSet = async (page, input, searchName) => {
     if (input.googlesheetLink) {
         const inputSelector = '.c-autocomplete input[type=search]'
         try { await page.waitForSelector(inputSelector); } catch (e) { log.info('Search input not found'); }
-        const input = await page.$(inputSelector);
-        const searchInputVal = await getAttribute(input, 'textContent')
+        const inputHtml = await page.$(inputSelector);
+        const searchInputVal = await getAttribute(inputHtml, 'textContent')
         log.info(`searchName: ${searchName}`)
         log.info(`searchInputVal: ${searchInputVal}`)
         return (searchInputVal.indexOf(searchName) >= 0)
@@ -202,8 +202,8 @@ module.exports.setAutocompletion = async (page, input, userData) => {
 
     const inputSelector = '.c-autocomplete input[type=search]'
     try { await page.waitForSelector(inputSelector); } catch (e) { log.info('Search input not found'); }
-    const input = await page.$(inputSelector);
-    const searchInputVal = await getAttribute(input, 'textContent')
+    const inputHtml = await page.$(inputSelector);
+    const searchInputVal = await getAttribute(inputHtml, 'textContent')
     log.info(`searchInputVal2: ${searchInputVal}`)
 
     await page.click(formSelector);
