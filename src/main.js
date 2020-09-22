@@ -20,6 +20,31 @@ Apify.main(async () => {
     // Actor INPUT variable
     const input = await Apify.getValue('INPUT');
 
+    // const input = {
+    //   "destType": "city",
+    //   "googlesheetLink": "https://docs.google.com/spreadsheets/d/1mnCxzaz1gBmAFUHE7uwfhdCyoVbzKox1_qIAqfvSnjs/edit?usp=sharing",
+    //   "sortBy": "bayesian_review_score",
+    //   "currency": "EUR",
+    //   "language": "en-gb",
+    //   "minMaxPrice": "none",
+    //   "propertyType": "Hotels",
+    //   "proxyConfig": {
+    //     "useApifyProxy": false,
+    //     "apifyProxyGroups": [
+    //       "SHADER"
+    //     ]
+    //   },
+    //   "simple": true,
+    //   "useFilters": false,
+    //   "testProxy": false,
+    //   "extendOutputFunction": "($) => { return {} }",
+    //   "checkIn": "",
+    //   "checkOut": "",
+    //   "rooms": 1,
+    //   "adults": 2,
+    //   "children": 0
+    // }
+
     // Actor STATE variable
     const state = await Apify.getValue('STATE') || { crawled: {} };
 
@@ -88,6 +113,7 @@ Apify.main(async () => {
             Apify.utils.log.info(`csv extraction: ${id} ${type} ${name} ${city} ${country}`);
             request = {
               url: startUrl,
+              uniqueKey: id,
               userData: {
                 id,
                 type,
@@ -140,6 +166,7 @@ Apify.main(async () => {
             devtools: true,
             ignoreHTTPSErrors: true,
             useChrome: Apify.isAtHome(),
+            // slowMo: 50,
             args: [
                 '--ignore-certificate-errors',
             ],
@@ -260,6 +287,7 @@ Apify.main(async () => {
                 // If property type is enabled, enqueue necessary page.
                 if (settingPropertyType) {
                     await setPropertyType(page, input, requestQueue, request.userData);
+                    return
                 }
 
                 // If min-max price is enabled, enqueue necessary page.
@@ -286,7 +314,8 @@ Apify.main(async () => {
                     log.info('Found no result. Skipping..');
                     return;
                 }
-
+                log.info(`enqueuingReady:${enqueuingReady}`)
+                log.info(`input.simple:${input.simple}`)
                 if (enqueuingReady && input.simple) { // If simple output is enough, extract the data.
                     log.info('extracting data...');
                     await Apify.utils.puppeteer.injectJQuery(page);

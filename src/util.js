@@ -22,7 +22,7 @@ module.exports.getAttribute = getAttribute;
 
 
 const saveScreen = async (page, key = 'debug-screen') => {
-    const screenshotBuffer = await page.screenshot({ fullPage: false });
+    const screenshotBuffer = await page.screenshot({ fullPage: true });
     await Apify.setValue(key, screenshotBuffer, { contentType: 'image/png' });
 };
 
@@ -187,10 +187,11 @@ module.exports.isAutocompletionSet = async (page, input, searchName) => {
         const inputSelector = '.c-autocomplete input[type=search]'
         try { await page.waitForSelector(inputSelector); } catch (e) { log.info('Search input not found'); }
         const inputHtml = await page.$(inputSelector);
-        const searchInputVal = await getAttribute(inputHtml, 'textContent')
-        log.info(`searchName: ${searchName}`)
-        log.info(`searchInputVal: ${searchInputVal}`)
-        await saveScreen(page, 'isAutocompletionSet');
+        searchInputVal = await page.evaluate((inputSelector)=>{
+          return  document.querySelector(inputSelector).value
+        }, inputSelector)
+        // log.info(`searchName: ${searchName}`)
+        // log.info(`searchInputVal: ${searchInputVal}`)
         return (searchInputVal.indexOf(searchName) >= 0)
     }
     return true;
@@ -199,19 +200,44 @@ module.exports.isAutocompletionSet = async (page, input, searchName) => {
 module.exports.setAutocompletion = async (page, input, userData) => {
     log.info('enqueuing autocompletion page...');
     const searchValue = `${userData.name}, ${userData.city}`
-    const autocompleteFirstLiSelector = '.c-autocomplete__list li'
+    const autocompleteFirstLiSelector = '#frm .c-autocomplete__list.sb-autocomplete__list-with_photos li'
     const formSelector = '#frm'
+    const inputSelector = '.c-autocomplete input[type=search]'
+
     log.info(`Using autocompletion: ${searchValue}`);
-    await page.type('.c-autocomplete input[type=search]', searchValue);
-    await saveScreen(page, 'setAutocompletion1');
+    const inputHtml = await page.$(inputSelector);
+    await page.waitForSelector(inputSelector, { timeout: 10000 });
+
+    let inputVal = await getAttribute(inputSelector, 'textContent');
+    log.info(`input val: ${inputVal}`)
+
+    await page.evaluate((inputSelector)=>{
+      document.querySelector(inputSelector).click({ clickCount: 3 })
+      document.querySelector(inputSelector).value = ""
+    }, inputSelector)
+
+    await page.waitFor(500)
+
+    // await Promise.all([
+    //   page.waitForNavigation(), // The promise resolves after navigation has finished
+    //   page.keyboard.type(searchValue, {delay: 500})
+    // ]);
+    await page.keyboard.type(searchValue, {delay: 100})
     await page.waitForSelector(autocompleteFirstLiSelector, { timeout: 10000 });
     await page.click(autocompleteFirstLiSelector);
-    await page.waitForSelector(formSelector, { timeout: 10000 });
+    const autocompleteSelection = await page.$(autocompleteFirstLiSelector);
+    const autocompleteSelectionText = await getAttribute(autocompleteSelection, 'textContent');
+    log.info(`clicking first autocomplet selection: ${autocompleteSelectionText}`)
+    inputVal = await getAttribute(inputSelector, 'textContent');
+    log.info(`input val after autocomplete: ${inputVal}`)
+    await page.waitForSelector(formSelector, { timeout: 5000 });
 
-    await saveScreen(page, 'setAutocompletion2');
-
-    await page.click(formSelector);
-    await saveScreen(page, 'setAutocompletion3');
+    await page.evaluate(()=>{
+      document.getElementById('frm').submit()
+    })
+    log.info(`clicked form2`)
+    await page.waitForNavigation();
+    // await saveScreen(page, 'setAutocompletion3');
 };
 
 module.exports.setPropertyType = async (page, input, requestQueue, userData) => {
@@ -230,7 +256,7 @@ module.exports.setPropertyType = async (page, input, requestQueue, userData) => 
                   label: 'page'
                 },
                 url: urlMod(href),
-                uniqueKey: `${fText}_0`,
+                uniqueKey: `${userData.id}_${fText}_0`,
             });
 
             break;
