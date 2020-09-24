@@ -247,7 +247,7 @@ Apify.main(async () => {
                 const detail = await extractDetail(page, ld, input, request.userData);
                 if (detail.name.toLowerCase().indexOf(request.userData.name.toLowerCase()) < 0) {
                     // first result does not match
-                    log.info(`${request.userData.id} detail name does not match.`);
+                    log.info(`${request.userData.id} detail name ${detail.name} does not match with input ${request.userData.name}`);
                     throw new Error('name does not match, trying again');
                 }
                 log.info(`${request.userData.id} detail extracted`);
