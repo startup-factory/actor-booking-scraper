@@ -324,20 +324,25 @@ Apify.main(async () => {
                     const result = await page.evaluate(listPageFunction, input, feelingLucky, request.userData);
                     log.info(`Found ${result.length} results`);
                     log.info(`First result name ${result[0].name}`);
-
                     if (result.length > 0) {
-                        const toBeAdded = [];
-                        for (const item of result) {
-                            item.url = addUrlParameters(item.url, input);
-                            if (!state.crawled[item.name]) {
-                                toBeAdded.push(item);
-                                state.crawled[item.name] = true;
+                        if (feelingLucky && result[0].name.toLowerCase().indexOf(request.userData.name.toLowerCase()) < 0) {
+                            // first result does not match
+                            throw new Error('first result name does not match.');
+                        }else {
+                            const toBeAdded = [];
+                            for (const item of result) {
+                                item.url = addUrlParameters(item.url, input);
+                                if (!state.crawled[item.name]) {
+                                    toBeAdded.push(item);
+                                    state.crawled[item.name] = true;
+                                }
+                            }
+                            if (migrating) { await Apify.setValue('STATE', state); }
+                            if (toBeAdded.length > 0) {
+                                await Apify.pushData(toBeAdded);
                             }
                         }
-                        if (migrating) { await Apify.setValue('STATE', state); }
-                        if (toBeAdded.length > 0) {
-                            await Apify.pushData(toBeAdded);
-                        }
+
                     }
                 } else if (enqueuingReady) { // If not, enqueue the detail pages to be extracted.
                     log.info('enqueuing detail page from first search result...');
@@ -372,8 +377,27 @@ Apify.main(async () => {
 
         handleFailedRequestFunction: async ({ request }) => {
             log.info(`Request ${request.url} failed too many times`);
+            // await Apify.pushData({
+            //     '#debug': Apify.utils.createRequestDebugInfo(request),
+            // });
             await Apify.pushData({
-                '#debug': Apify.utils.createRequestDebugInfo(request),
+                url: null,
+                name: null,
+                rating: null,
+                reviews: null,
+                stars: null,
+                price: null,
+                currency: null,
+                roomType: null,
+                persons: null,
+                address: null,
+                location: null,
+                image: null,
+                _inputId: request.userData.id,
+                _inputType: request.userData.type,
+                _inputName: request.userData.name,
+                _inputCity: request.userData.city,
+                _inputCountry: request.userData.country
             });
         },
 

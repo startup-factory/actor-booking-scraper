@@ -224,11 +224,11 @@ module.exports.listPageFunction = (input, feelingLucky, userData) => new Promise
                 address,
                 location: latlng ? { lat: latlng[0], lng: latlng[1] } : null,
                 image,
-                inputId: userData.id,
-                inputType: userData.type,
-                inputName: userData.name,
-                inputCity: userData.city,
-                inputCountry: userData.country
+                _inputId: userData.id,
+                _inputType: userData.type,
+                _inputName: userData.name,
+                _inputCity: userData.city,
+                _inputCountry: userData.country
             };
             if (!item.rating || item.rating >= (input.minScore || 0)) { result.push(item); }
             if (++finished >= started) { resolve(result); }
