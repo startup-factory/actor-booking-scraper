@@ -330,7 +330,7 @@ Apify.main(async () => {
                         if (feelingLucky && result[0].name.toLowerCase().indexOf(request.userData.name.toLowerCase()) < 0) {
                             // first result does not match
                             log.info('first result name does not match. pushing empty data');
-                            await pushEmptyResults(request.userData);
+                            throw new Error('First name does not match, trying again');
                         }else {
                             const toBeAdded = [];
                             for (const item of result) {
