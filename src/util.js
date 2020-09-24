@@ -216,13 +216,13 @@ module.exports.setAutocompletion = async (page, input, userData) => {
       document.querySelector(inputSelector).value = ""
     }, inputSelector)
 
-    await page.waitFor(500)
+    await page.waitFor(1000)
 
     // await Promise.all([
     //   page.waitForNavigation(), // The promise resolves after navigation has finished
     //   page.keyboard.type(searchValue, {delay: 500})
     // ]);
-    await page.keyboard.type(searchValue, {delay: 100})
+    await page.keyboard.type(searchValue, {delay: 500})
     await page.waitForSelector(autocompleteFirstLiSelector, { timeout: 10000 });
     await page.click(autocompleteFirstLiSelector);
     const autocompleteSelection = await page.$(autocompleteFirstLiSelector);
