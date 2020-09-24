@@ -243,9 +243,14 @@ Apify.main(async () => {
                 }
 
                 // Extract the data.
-                log.info('extracting detail...');
+                log.info(`${request.userData.id} extracting detail...`);
                 const detail = await extractDetail(page, ld, input, request.userData);
-                log.info('detail extracted');
+                if (detail.name.toLowerCase().indexOf(request.userData.name.toLowerCase()) < 0) {
+                    // first result does not match
+                    log.info(`${request.userData.id} detail name does not match.`);
+                    throw new Error('name does not match, trying again');
+                }
+                log.info(`${request.userData.id} detail extracted`);
                 let userResult = {};
 
                 if (extendOutputFunction) {
@@ -256,7 +261,7 @@ Apify.main(async () => {
                     }, input.extendOutputFunction);
 
                     if (!isObject(userResult)) {
-                        log.info('extendOutputFunction has to return an object!!!');
+                        log.info(`${request.userData.id} extendOutputFunction has to return an object!!!`);
                         process.exit(1);
                     }
                 }
@@ -367,6 +372,7 @@ Apify.main(async () => {
 
                         await requestQueue.addRequest({
                             userData: {
+                                ...userData,
                                 label: 'detail',
                                 order: iLink + firstItem,
                             },
