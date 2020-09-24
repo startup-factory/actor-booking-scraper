@@ -388,3 +388,26 @@ module.exports.enqueueAllPages = async (page, requestQueue, input) => {
 };
 
 module.exports.isObject = val => typeof val === 'object' && val !== null && !Array.isArray(val);
+
+
+module.exports.pushEmptyResults = async (userData) => {
+  return await Apify.pushData({
+      url: null,
+      name: null,
+      rating: null,
+      reviews: null,
+      stars: null,
+      price: null,
+      currency: null,
+      roomType: null,
+      persons: null,
+      address: null,
+      location: null,
+      image: null,
+      _inputId: userData.id,
+      _inputType: userData.type,
+      _inputName: userData.name,
+      _inputCity: userData.city,
+      _inputCountry: userData.country
+  });
+};

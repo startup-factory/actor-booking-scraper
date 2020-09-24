@@ -9,7 +9,8 @@ const {
     getAttribute, enqueueLinks, addUrlParameters,
     getWorkingBrowser, fixUrl, isFiltered,
     isMinMaxPriceSet, setMinMaxPrice, isPropertyTypeSet,
-    setPropertyType, enqueueAllPages, isAutocompletionSet, setAutocompletion
+    setPropertyType, enqueueAllPages, isAutocompletionSet, setAutocompletion,
+    pushEmptyResults
 } = require('./util.js');
 const csvToJson = require('csvtojson');
 
@@ -311,7 +312,8 @@ Apify.main(async () => {
 
                 const items = await page.$$('.sr_property_block.sr_item:not(.soldout_property)');
                 if (items.length === 0) {
-                    log.info('Found no result. Skipping..');
+                    log.info('Found no result. Pushing empty data');
+                    await pushEmptyResults(request.userData);
                     return;
                 }
                 log.info(`enqueuingReady:${enqueuingReady}`)
@@ -327,7 +329,8 @@ Apify.main(async () => {
                     if (result.length > 0) {
                         if (feelingLucky && result[0].name.toLowerCase().indexOf(request.userData.name.toLowerCase()) < 0) {
                             // first result does not match
-                            throw new Error('first result name does not match.');
+                            log.info('first result name does not match. pushing empty data');
+                            await pushEmptyResults(request.userData);
                         }else {
                             const toBeAdded = [];
                             for (const item of result) {
@@ -380,25 +383,7 @@ Apify.main(async () => {
             // await Apify.pushData({
             //     '#debug': Apify.utils.createRequestDebugInfo(request),
             // });
-            await Apify.pushData({
-                url: null,
-                name: null,
-                rating: null,
-                reviews: null,
-                stars: null,
-                price: null,
-                currency: null,
-                roomType: null,
-                persons: null,
-                address: null,
-                location: null,
-                image: null,
-                _inputId: request.userData.id,
-                _inputType: request.userData.type,
-                _inputName: request.userData.name,
-                _inputCity: request.userData.city,
-                _inputCountry: request.userData.country
-            });
+            await pushEmptyResults(request.userData)
         },
 
         gotoFunction: async ({ page, request }) => {
