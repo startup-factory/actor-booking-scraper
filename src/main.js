@@ -372,7 +372,7 @@ Apify.main(async () => {
 
                         await requestQueue.addRequest({
                             userData: {
-                                ...userData,
+                                ...request.userData,
                                 label: 'detail',
                                 order: iLink + firstItem,
                             },
