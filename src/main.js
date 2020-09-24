@@ -264,7 +264,7 @@ Apify.main(async () => {
                 await Apify.pushData({ ...detail, ...userResult });
             } else {
                 // Handle hotel list page.
-                log.info('Handle hotel list page.')
+                log.info(`${request.userData.id} Handle hotel list page.`)
                 const filtered = await isFiltered(page);
                 const settingFilters = input.useFilters && !filtered;
                 const settingMinMaxPrice = input.minMaxPrice !== 'none' && !await isMinMaxPriceSet(page, input);
@@ -275,7 +275,7 @@ Apify.main(async () => {
                 // Check if the page was open through working proxy.
                 const pageUrl = await page.url();
                 if (!input.startUrls && !input.googlesheetLink && pageUrl.indexOf(sortBy) < 0) {
-                    log.info(`page not open through working proxy`)
+                    log.info(`${request.userData.id} page not open through working proxy`)
                     await retireBrowser(puppeteerPool, page, requestQueue, request);
                     return;
                 }
@@ -298,7 +298,7 @@ Apify.main(async () => {
 
                 // If filtering is enabled, enqueue necessary pages.
                 if (input.useFilters && !filtered) {
-                    log.info('enqueuing filtered pages...');
+                    log.info(`${request.userData.id} enqueuing filtered pages...`);
 
                     await enqueueLinks(page, requestQueue, '.filterelement', null, 'page', fixUrl('&', input), async (link) => {
                         const lText = await getAttribute(link, 'textContent');
@@ -312,24 +312,24 @@ Apify.main(async () => {
 
                 const items = await page.$$('.sr_property_block.sr_item:not(.soldout_property)');
                 if (items.length === 0) {
-                    log.info('Found no result. Pushing empty data');
+                    log.info(`${request.userData.id} Found no result. Pushing empty data`);
                     await pushEmptyResults(request.userData);
                     return;
                 }
-                log.info(`enqueuingReady:${enqueuingReady}`)
-                log.info(`input.simple:${input.simple}`)
+                log.info(`${request.userData.id} enqueuingReady:${enqueuingReady}`)
+                log.info(`${request.userData.id} input.simple:${input.simple}`)
                 if (enqueuingReady && input.simple) { // If simple output is enough, extract the data.
-                    log.info('extracting data...');
+                    log.info(`${request.userData.id} extracting data...`);
                     await Apify.utils.puppeteer.injectJQuery(page);
                     // we extract only the first result of page
                     let feelingLucky = true
                     const result = await page.evaluate(listPageFunction, input, feelingLucky, request.userData);
-                    log.info(`Found ${result.length} results`);
-                    log.info(`First result name ${result[0].name}`);
+                    log.info(`${request.userData.id} Found ${result.length} results`);
+                    log.info(`${request.userData.id} First result name ${result[0].name}`);
                     if (result.length > 0) {
                         if (feelingLucky && result[0].name.toLowerCase().indexOf(request.userData.name.toLowerCase()) < 0) {
                             // first result does not match
-                            log.info('first result name does not match. pushing empty data');
+                            log.info(`${request.userData.id} first result name does not match. pushing empty data`);
                             throw new Error('First name does not match, trying again');
                         }else {
                             const toBeAdded = [];
@@ -379,7 +379,7 @@ Apify.main(async () => {
         },
 
         handleFailedRequestFunction: async ({ request }) => {
-            log.info(`Request ${request.url} failed too many times`);
+            log.info(`${request.userData.id} Request ${request.url} failed too many times`);
             // await Apify.pushData({
             //     '#debug': Apify.utils.createRequestDebugInfo(request),
             // });

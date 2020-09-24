@@ -198,18 +198,16 @@ module.exports.isAutocompletionSet = async (page, input, searchName) => {
 };
 
 module.exports.setAutocompletion = async (page, input, userData) => {
-    log.info('enqueuing autocompletion page...');
     const searchValue = `${userData.name}, ${userData.city}`
     const autocompleteFirstLiSelector = '#frm .c-autocomplete__list.sb-autocomplete__list-with_photos li'
     const formSelector = '#frm'
     const inputSelector = '.c-autocomplete input[type=search]'
 
-    log.info(`Using autocompletion: ${searchValue}`);
+    log.info(`${userData.id} Using autocompletion: ${searchValue}`);
     const inputHtml = await page.$(inputSelector);
     await page.waitForSelector(inputSelector, { timeout: 10000 });
 
     let inputVal = await getAttribute(inputSelector, 'textContent');
-    log.info(`input val: ${inputVal}`)
 
     await page.evaluate((inputSelector)=>{
       document.querySelector(inputSelector).click({ clickCount: 3 })
@@ -227,28 +225,27 @@ module.exports.setAutocompletion = async (page, input, userData) => {
     await page.click(autocompleteFirstLiSelector);
     const autocompleteSelection = await page.$(autocompleteFirstLiSelector);
     const autocompleteSelectionText = await getAttribute(autocompleteSelection, 'textContent');
-    log.info(`clicking first autocomplet selection: ${autocompleteSelectionText}`)
-    inputVal = await getAttribute(inputSelector, 'textContent');
-    log.info(`input val after autocomplete: ${inputVal}`)
+    log.info(`${request.userData.id} clicking first autocomplet selection: ${autocompleteSelectionText}`)
+
     await page.waitForSelector(formSelector, { timeout: 5000 });
 
     await page.evaluate(()=>{
       document.getElementById('frm').submit()
     })
-    log.info(`clicked form2`)
+    log.info(`${userData.id} clicked form2`)
     await page.waitForNavigation();
     // await saveScreen(page, 'setAutocompletion3');
 };
 
 module.exports.setPropertyType = async (page, input, requestQueue, userData) => {
-    log.info('enqueuing property type page...');
+    log.info(`${userData.id} enqueuing property type page...`);
     const filters = await page.$$('.filterelement');
     const urlMod = fixUrl('&', input);
     for (const filter of filters) {
         const label = await filter.$('.filter_label');
         const fText = await getAttribute(label, 'textContent');
         if (fText === input.propertyType) {
-            log.info(`Using filter 1: ${fText}`);
+            log.info(`${userData.id} Using filter 1: ${fText}`);
             const href = await getAttribute(filter, 'href');
             await requestQueue.addRequest({
                 userData: {
