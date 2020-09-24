@@ -136,6 +136,11 @@ module.exports.extractDetail = async (page, ld, input, userData) => {
         address,
         image: img1 || img2 || (img3 ? img3[1] : null),
         rooms,
+        _inputId: userData.id,
+        _inputType: userData.type,
+        _inputName: userData.name,
+        _inputCity: userData.city,
+        _inputCountry: userData.country
     };
 };
 
